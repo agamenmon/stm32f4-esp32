@@ -1,0 +1,26 @@
+--cpu Cortex-M4.fp
+"lcd1\stm32f4xx_hal_rcc_ex.o"
+"lcd1\stm32f4xx_hal.o"
+"lcd1\stm32f4xx_hal_flash_ramfunc.o"
+"lcd1\stm32f4xx_hal_gpio.o"
+"lcd1\stm32f4xx_hal_tim_ex.o"
+"lcd1\stm32f4xx_hal_rcc.o"
+"lcd1\stm32f4xx_hal_dma.o"
+"lcd1\stm32f4xx_hal_flash_ex.o"
+"lcd1\stm32f4xx_hal_pwr.o"
+"lcd1\stm32f4xx_hal_cortex.o"
+"lcd1\stm32f4xx_hal_dma_ex.o"
+"lcd1\stm32f4xx_hal_flash.o"
+"lcd1\stm32f4xx_hal_pwr_ex.o"
+"lcd1\stm32f4xx_hal_tim.o"
+"lcd1\stm32f4xx_it.o"
+"lcd1\stm32f4xx_hal_msp.o"
+"lcd1\main.o"
+"lcd1\lcd_txt.o"
+"lcd1\system_stm32f4xx.o"
+"lcd1\startup_stm32f407xx.o"
+--library_type=microlib --strict --scatter "lcd1\lcd1.sct"
+
+--diag_suppress=L6329 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "lcd1.map" -o lcd1\lcd1.axf
