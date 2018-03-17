@@ -1,21 +1,25 @@
 #include "lcd_txt.h"
 
-
+void delay(int count)
+{
+	while(count--) {
+  }
+}
 
 /*--------------- Initialize LCD ------------------*/
 void lcd_init(void)
 {
-	
-	HAL_Delay(30);
-	
+	delay(100);
 	PIN_LOW(D4_PORT,D4_PIN);
 	PIN_HIGH(D5_PORT,D5_PIN);
 	PIN_LOW(D6_PORT,D6_PIN);
 	PIN_LOW(D7_PORT,D7_PIN);
 	PIN_LOW(RS_PORT,RS_PIN);
-	
+	delay(5);
 	PIN_HIGH(EN_PORT,EN_PIN);
+	delay(5);
 	PIN_LOW(EN_PORT,EN_PIN);
+	delay(5);
 	
 	lcd_write(0,0x28);
 	lcd_write(0,0x0c);
@@ -26,13 +30,16 @@ void lcd_init(void)
 /*--------------- Write To LCD ---------------*/
 void lcd_write(uint8_t type,uint8_t data)
 {
-	HAL_Delay(2);
+	
+	delay(5000);
 	if(type)
 	{
 		PIN_HIGH(RS_PORT,RS_PIN);
+		delay(5000);
 	}else
 	{
 		PIN_LOW(RS_PORT,RS_PIN);
+		delay(5000);
 	}
 	
 	//Send High Nibble
@@ -155,6 +162,7 @@ void lcd_puts(uint8_t x, uint8_t y, int8_t *string)
 void lcd_clear(void)
 {
 	lcd_write(0,0x01);
+	delay(5);
 }
 
 

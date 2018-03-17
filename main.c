@@ -1,9 +1,12 @@
 #include <stm32f4xx.h>
 #include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
 #include <stm32f4xx_usart.h> // under Libraries/STM32F4xx_StdPeriph_Driver/inc and src
+#include <string.h>
 #include <lcd_txt.h>
-
-#define MAX_STRLEN 12 // this is the maximum string length of our string in characters
+/*
+** 
+*/
+#define MAX_STRLEN 20 // this is the maximum string length of our string in characters
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
 
 void Delay(__IO uint32_t nCount) {
@@ -29,18 +32,18 @@ void init_USART1(uint32_t baudrate){
 	GPIO_InitTypeDef GPIO_InitStruct; // this is for the GPIO pins used as TX and RX
 	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
 	NVIC_InitTypeDef NVIC_InitStructure; // this is used to configure the NVIC (nested vector interrupt controller)
-	
 	/* enable APB2 peripheral clock for USART1 
 	 * note that only USART1 and USART6 are connected to APB2
 	 * the other USARTs are connected to APB1
 	 */
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-	
 	/* enable the peripheral clock for the pins used by 
 	 * USART1, PB6 for TX and PB7 for RX
 	 */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 	/* This sequence sets up the TX and RX pins 
 	 * so they work correctly with the USART1 peripheral
 	 */
@@ -50,14 +53,31 @@ void init_USART1(uint32_t baudrate){
 	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;			// this defines the output type as push pull mode (as opposed to open drain)
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;			// this activates the pullup resistors on the IO pins
 	GPIO_Init(GPIOB, &GPIO_InitStruct);					// now all the values are passed to the GPIO_Init() function which sets the GPIO registers
-	
+	/* Configure PD12, PD13, PD14, PD15 in output mode */
+  	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+  	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+  	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+  	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+  	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  	GPIO_Init(GPIOD, &GPIO_InitStruct);
+	/* Configure PA0 in input mode */
+  	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
+  	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
+  	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+  	GPIO_Init(GPIOA, &GPIO_InitStruct);
+  	/* Configure PE2 PE3, PE4, PE5, PE0, PE1 in output mode */
+  	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
+  	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+  	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+  	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
+  	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  	GPIO_Init(GPIOE, &GPIO_InitStruct);
 	/* The RX and TX pins are now connected to their AF
 	 * so that the USART1 can take over control of the 
 	 * pins
 	 */
-	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1); //
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1); 
 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
-	
 	/* Now the USART_InitStruct is used to define the 
 	 * properties of USART1 
 	 */
@@ -68,8 +88,6 @@ void init_USART1(uint32_t baudrate){
 	USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None; // we don't want flow control (standard)
 	USART_InitStruct.USART_Mode = USART_Mode_Tx | USART_Mode_Rx; // we want to enable the transmitter and the receiver
 	USART_Init(USART1, &USART_InitStruct);					// again all the properties are passed to the USART_Init function which takes care of all the bit setting
-	
-	
 	/* Here the USART1 receive interrupt is enabled
 	 * and the interrupt controller is configured 
 	 * to jump to the USART1_IRQHandler() function
@@ -85,24 +103,8 @@ void init_USART1(uint32_t baudrate){
 
 	// finally this enables the complete USART1 peripheral
 	USART_Cmd(USART1, ENABLE);
-	
-	//init_LCD
-	
 }
 
-void init_LCD()
-	{
-	  GPIO_InitTypeDef  GPIO_InitStructure;
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
-	
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2| GPIO_Pin_3| GPIO_Pin_4| GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(GPIOE, &GPIO_InitStructure);
-	
-	}
 /* This function is used to transmit a string of characters via 
  * the USART specified in USARTx.
  * 
@@ -130,16 +132,25 @@ int main(void) {
   
   init_USART1(9600); // initialize USART1 @ 9600 baud
 
-  USART_puts(USART1, "Init complete! Hello World!\r\n"); // just send a message to indicate that it works
-    lcd_init();
-    lcd_clear();
-	  lcd_puts(0,0,(int8_t*)"nhan");
+  USART_puts(USART1, "Init complete! Hello"); // just send a message to indicate that it works
+	lcd_init();
+	lcd_clear();
+
+ 	lcd_puts(1,3,(int8_t*)"lai");
   while (1){
-		
-		
+    /*
+     * You can do whatever you want in here 
+     */
+//		lcd_puts(0,0,(int8_t*)"fndks");
+
+		if(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0))
+			GPIO_SetBits(GPIOD,GPIO_Pin_12);
+		else
+			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
+
+
   }
 }
-
 // this is the interrupt request handler (IRQ) for ALL USART1 interrupts
 void USART1_IRQHandler(void){
 	
@@ -157,10 +168,27 @@ void USART1_IRQHandler(void){
 			cnt++;
 		}
 		else{ // otherwise reset the character counter and print the received string
-			
 			USART_puts(USART1, received_string);
+	
+		//	for(i =0; i < cnt;i++)
+		//		received_string[i] = '\0';
+			
+//			if(received_string[cnt-1] == 'A')
+//				{
+//					USART_puts(USART1,"Set GPIO \n");
+//					GPIO_SetBits(GPIOD,GPIO_Pin_13);
+//					GPIO_SetBits(GPIOD,GPIO_Pin_14);
+//					GPIO_SetBits(GPIOD,GPIO_Pin_15);
+//				}
+//				else
+//				{
+//					USART_puts(USART1,"reSet GPIO\n");
+//					GPIO_ResetBits(GPIOD,GPIO_Pin_13);
+//					GPIO_ResetBits(GPIOD,GPIO_Pin_14);
+//					GPIO_ResetBits(GPIOD,GPIO_Pin_15);
+//				}
 			for(i =0; i < cnt;i++)
-				received_string[i] = '\0';
+			received_string[i] = '\0';	
 			cnt = 0;
 		}
 	}

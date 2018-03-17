@@ -14,29 +14,29 @@
 /*------------- Define For Connection -----------------*/
 
 #define RS_PORT		GPIOE
-#define RS_PIN		0
+#define RS_PIN		GPIO_Pin_0
 
 #define EN_PORT		GPIOE
-#define EN_PIN		1
+#define EN_PIN		GPIO_Pin_1
 
 #define D7_PORT		GPIOE
-#define D7_PIN		5
+#define D7_PIN		GPIO_Pin_5
 
 #define D6_PORT		GPIOE
-#define D6_PIN		4
+#define D6_PIN		GPIO_Pin_4
 
 #define D5_PORT		GPIOE
-#define D5_PIN		3
+#define D5_PIN		GPIO_Pin_3
 
 #define D4_PORT		GPIOE
-#define D4_PIN		2
+#define D4_PIN		GPIO_Pin_2
 
 
-/*------------ Declaring Private Macro -----------------
+/*------------ Declaring Private Macro -----------------*/
 
-#define PIN_LOW(PORT,PIN)	HAL_GPIO_WritePin(PORT,PIN,GPIO_PIN_RESET);
-#define PIN_HIGH(PORT,PIN)	HAL_GPIO_WritePin(PORT,PIN,GPIO_PIN_SET);
-*/
+#define PIN_LOW(PORT,PIN)	GPIO_ResetBits(PORT,PIN);
+#define PIN_HIGH(PORT,PIN)	GPIO_SetBits(PORT,PIN); 
+
 /*------------ Declaring Function Prototype -------------*/
 void lcd_init(void);
 void lcd_write(uint8_t type,uint8_t data);
